@@ -4,12 +4,12 @@ using System.Collections;
 public class Prince : MonoBehaviour
 {
     private float speed = 3f; // скорость движения
-    private float jump_force = 7f; // сила прыжка
+    private float jump_force = 12f; // сила прыжка
     private bool grounded = false;
 
     private Rigidbody2D rigid_body; // ссылка на компонент
     private Animator animations; // ссылка на компонент анимации
-    private SpriteRenderer sprite; // ссылка на компонент где изображение собаки
+    private SpriteRenderer sprite; // ссылка на компонент где изображение принца
     private AudioSource audioSource; // ссылка на компонент AudioSource
 
     private States State
@@ -74,12 +74,18 @@ public class Prince : MonoBehaviour
 
     private void CheckGrounded()
     {
-        Collider2D[] collider = Physics2D.OverlapBoxAll(transform.position, new Vector2(1.4f, 0.3f), 0f); // массив коллайдеров
-        grounded = collider.Length > 1; // если есть коллайдер под ногами, то мы на земле
+        grounded = Mathf.Abs(rigid_body.velocity.y) < 0.01f;
+
         if (!grounded)
         {
-            State = States.Jump; // если не стоим на земле - прыгаем
+            State = States.Jump;
         }
+        //Collider2D[] collider = Physics2D.OverlapBoxAll(transform.position, new Vector2(1.4f, 0.3f), 0f); // массив коллайдеров
+        //grounded = collider.Length > 1; // если есть коллайдер под ногами, то мы на земле
+        //if (!grounded)
+        //{
+        //    State = States.Jump; // если не стоим на земле - прыгаем
+        //}
     }
 
     //// Новый метод для обработки столкновений
