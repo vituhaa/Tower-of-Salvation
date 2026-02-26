@@ -4,7 +4,7 @@ using System.Collections;
 public class Prince : MonoBehaviour
 {
     private float speed = 3f; // скорость движения
-    private float jump_force = 12f; // сила прыжка
+    private float jump_force = 14f; // сила прыжка
     private bool grounded = false;
 
     private Rigidbody2D rigid_body; // ссылка на компонент
