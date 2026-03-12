@@ -145,6 +145,14 @@ public class Prince : MonoBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawLine(new Vector3(-100, deathY, 0), new Vector3(100, deathY, 0));
     }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Enemy"))
+        {
+            Die();
+        }
+    }
 }
 
 public enum States // перечисление всех видов анимации
