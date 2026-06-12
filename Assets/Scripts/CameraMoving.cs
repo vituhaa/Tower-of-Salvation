@@ -21,7 +21,11 @@ public class CameraMoving : MonoBehaviour
 
     void LateUpdate()
     {
-        if (target == null) return;
+        if (target == null)
+        {
+            FindPlayer();
+            return;
+        }
 
         float targetY = target.position.y + verticalOffset;
 
@@ -36,5 +40,15 @@ public class CameraMoving : MonoBehaviour
     {
         minY = newMinY;
         maxY = newMaxY;
+    }
+
+    void FindPlayer()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+
+        if (player != null)
+        {
+            target = player.transform;
+        }
     }
 }
