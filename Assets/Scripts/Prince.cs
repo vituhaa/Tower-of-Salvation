@@ -4,15 +4,29 @@ using UnityEngine.SceneManagement;
 
 public class Prince : MonoBehaviour
 {
-    private float speed = 3f; // скорость движения
-    private float jump_force = 14f; // сила прыжка
+    private float speed = 3f;
+    private float jump_force = 14f;
     private bool grounded = false;
     private bool is_dead = false;
 
-    private Rigidbody2D rigid_body; // ссылка на компонент
-    private Animator animations; // ссылка на компонент анимации
-    private SpriteRenderer sprite; // ссылка на компонент где изображение принца
-    private AudioSource audioSource; // ссылка на компонент AudioSource
+    [SerializeField] private float wallSlideSpeed = 2f;
+    private bool isTouchingWall;
+    private bool isWallSliding;
+
+    [SerializeField] private Vector2 wallJumpForce = new Vector2(5f, 13f);
+    private float wallJumpDirection;
+    private bool isWallJumping;
+    private float wallJumpTime = 0.2f;
+    private float wallJumpCounter;
+
+    [SerializeField] private Transform wallCheckPoint;
+    [SerializeField] private float wallCheckRadius = 0.2f;
+    [SerializeField] private LayerMask wallLayer;
+
+    private Rigidbody2D rigid_body;
+    private Animator animations;
+    private SpriteRenderer sprite;
+    private AudioSource audioSource;
     private float horizontalInput;
 
     [SerializeField] private LayerMask groundLayer;
@@ -20,33 +34,31 @@ public class Prince : MonoBehaviour
     [SerializeField] private float groundCheckRadius = 0.12f;
     [SerializeField] private float deathY = -10f;
 
-
+    [Header("Настройки Атаки")]
+    [SerializeField] private Transform attackPoint;
+    [SerializeField] private float attackRange = 0.6f;
+    [SerializeField] private LayerMask enemyLayer;
+    private float attackCooldown = 0.4f;
+    private float nextAttackTime = 0f;
+    private bool isAttacking = false;
 
     private States State
     {
-        get { return (States)animations.GetInteger("state"); } // получение значений из аниматора
-        set { animations.SetInteger("state", (int)value); } // изменение значений
+        get { return (States)animations.GetInteger("state"); }
+        set { animations.SetInteger("state", (int)value); }
     }
 
     private void Awake()
     {
-        rigid_body = GetComponent<Rigidbody2D>(); // получение компонента
-        animations = GetComponent<Animator>(); // получение компонента
-        sprite = GetComponentInChildren<SpriteRenderer>(); // получение компонента из дочернего объекта
-        audioSource = GetComponent<AudioSource>(); // получение компонента AudioSource
-    }
-
-    void Start()
-    {
-
+        rigid_body = GetComponent<Rigidbody2D>();
+        animations = GetComponent<Animator>();
+        sprite = GetComponentInChildren<SpriteRenderer>();
+        audioSource = GetComponent<AudioSource>();
     }
 
     void Update()
     {
-        if (is_dead)
-        {
-            return;
-        }
+        if (is_dead) return;
 
         if (transform.position.y < deathY)
         {
@@ -54,78 +66,171 @@ public class Prince : MonoBehaviour
             return;
         }
 
-        horizontalInput = Input.GetAxis("Horizontal");
-        if (horizontalInput != 0)
+        // Если атакуем, ходить нельзя
+        if (isAttacking)
         {
-            sprite.flipX = horizontalInput < 0;
+            horizontalInput = 0;
+            return;
         }
 
-        if (grounded && Input.GetButtonDown("Jump"))
+        if (!isWallJumping)
         {
-            Jump();
+            horizontalInput = Input.GetAxis("Horizontal");
+
+            if (horizontalInput != 0 && !isWallSliding)
+            {
+                sprite.flipX = horizontalInput < 0;
+            }
         }
+
+        if (isWallJumping)
+        {
+            wallJumpCounter -= Time.deltaTime;
+            if (wallJumpCounter <= 0)
+            {
+                isWallJumping = false;
+            }
+        }
+
+        // Проверка атаки на ЛКМ
+        if (Time.time >= nextAttackTime && Input.GetMouseButtonDown(0) && grounded)
+        {
+            StartCoroutine(AttackRoutine());
+        }
+
+        // Прыжки
+        if (Input.GetButtonDown("Jump") && !isAttacking)
+        {
+            if (grounded)
+            {
+                Jump();
+            }
+            else if (isWallSliding)
+            {
+                WallJump();
+            }
+        }
+    }
+
+    private IEnumerator AttackRoutine()
+    {
+        isAttacking = true;
+        nextAttackTime = Time.time + attackCooldown;
+        rigid_body.velocity = new Vector2(0, rigid_body.velocity.y); // Останавливаем принца
+
+        // Включаем триггер атаки в аниматоре
+        animations.SetTrigger("AttackTrigger");
+
+        // НАНОСИМ УРОН: Вычисляем положение точки атаки с учетом разворота
+        float direction = sprite.flipX ? -1f : 1f;
+        Vector2 realAttackPosition = new Vector2(
+            transform.position.x + (Mathf.Abs(attackPoint.localPosition.x) * direction),
+            attackPoint.position.y
+        );
+
+        // Ищем врагов в правильно смещенной точке
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(realAttackPosition, attackRange, enemyLayer);
+
+        foreach (Collider2D enemyCollider in hitEnemies)
+        {
+            Debug.Log("НАШЛИ ВРАГА!");
+            Enemy enemy = enemyCollider.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.TakeDamage(1);
+            }
+        }
+
+        // Ждем, пока пройдет анимация удара
+        yield return new WaitForSeconds(attackCooldown);
+        isAttacking = false;
     }
 
     private void FixedUpdate()
     {
-        if (is_dead) return;
-        CheckGrounded();
-        float gorizontal_move = Input.GetAxis("Horizontal");
-        rigid_body.velocity = new Vector2(gorizontal_move * speed, rigid_body.velocity.y);
-        //if (gorizontal_move != 0)
-        //{
-        //    sprite.flipX = gorizontal_move < 0.0f;
-        //}
-        if (!grounded)
+        if (is_dead || isAttacking) return;
+
+        CheckSurroundings();
+
+        if (!grounded && isTouchingWall && horizontalInput != 0)
         {
-            State = States.Jump;
-        }
-        else if (Mathf.Abs(horizontalInput) > 0.01f)
-        {
-            State = States.Run;
+            isWallSliding = true;
+            isWallJumping = false;
         }
         else
         {
-            State = States.Idle;
+            isWallSliding = false;
+        }
+
+        if (isWallSliding)
+        {
+            rigid_body.velocity = new Vector2(rigid_body.velocity.x, Mathf.Clamp(rigid_body.velocity.y, -wallSlideSpeed, float.MaxValue));
+            State = States.WallSlide;
+        }
+        else if (isWallJumping)
+        {
+            rigid_body.velocity = new Vector2(wallJumpDirection * wallJumpForce.x, wallJumpForce.y);
+        }
+        else
+        {
+            rigid_body.velocity = new Vector2(horizontalInput * speed, rigid_body.velocity.y);
+
+            if (!grounded)
+            {
+                State = States.Jump;
+            }
+            else if (Mathf.Abs(horizontalInput) > 0.01f)
+            {
+                State = States.Run;
+            }
+            else
+            {
+                State = States.Idle;
+            }
         }
     }
-
-
-    //private void Run()
-    //{
-    //    if (grounded)
-    //    {
-    //        State = States.Run; // состояние бега
-    //    }
-    //    Vector3 direction = transform.right * Input.GetAxis("Horizontal"); // перемещение по горизонтали
-    //    transform.position = Vector3.MoveTowards(transform.position, transform.position + direction, speed * Time.deltaTime);
-    //    // текущее местоположение, место перемещения, скорость
-    //    sprite.flipX = direction.x < 0.0f; // если направление < 0, то поворот влево
-    //}
 
     private void Jump()
     {
         rigid_body.velocity = new Vector2(rigid_body.velocity.x, jump_force);
     }
 
-    private void CheckGrounded()
+    private void WallJump()
+    {
+        isWallSliding = false;
+        isWallJumping = true;
+        wallJumpCounter = wallJumpTime;
+        wallJumpDirection = sprite.flipX ? 1f : -1f;
+        rigid_body.velocity = new Vector2(wallJumpDirection * wallJumpForce.x, wallJumpForce.y);
+        sprite.flipX = wallJumpDirection < 0;
+    }
+
+    private void CheckSurroundings()
     {
         grounded = Physics2D.OverlapCircle(groundCheckPoint.position, groundCheckRadius, groundLayer);
+
+        if (wallCheckPoint != null)
+        {
+            float direction = sprite.flipX ? -1f : 1f;
+            Vector2 checkPosition = new Vector2(transform.position.x + (Mathf.Abs(wallCheckPoint.localPosition.x) * direction), wallCheckPoint.position.y);
+            isTouchingWall = Physics2D.OverlapCircle(checkPosition, wallCheckRadius, wallLayer);
+        }
+
+        if (grounded)
+        {
+            isWallJumping = false;
+        }
     }
 
     private void Die()
     {
         is_dead = true;
         State = States.Death;
-
         rigid_body.velocity = Vector2.zero;
         rigid_body.bodyType = RigidbodyType2D.Kinematic;
 
         Collider2D col = GetComponent<Collider2D>();
-        if (col != null)
-        {
-            col.enabled = false;
-        }
+        if (col != null) col.enabled = false;
         Invoke(nameof(RestartLevel), 1.5f);
     }
 
@@ -141,26 +246,28 @@ public class Prince : MonoBehaviour
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(groundCheckPoint.position, groundCheckRadius);
         }
-
-        Gizmos.color = Color.red;
-        Gizmos.DrawLine(new Vector3(-100, deathY, 0), new Vector3(100, deathY, 0));
-    }
-
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        if (collision.gameObject.CompareTag("Enemy"))
+        if (wallCheckPoint != null)
         {
-            Die();
+            Gizmos.color = Color.blue;
+            float direction = (sprite != null && sprite.flipX) ? -1f : 1f;
+            Vector3 checkPosition = new Vector3(transform.position.x + (Mathf.Abs(wallCheckPoint.localPosition.x) * direction), wallCheckPoint.position.y, 0);
+            Gizmos.DrawWireSphere(checkPosition, wallCheckRadius);
+        }
+        if (attackPoint != null)
+        {
+            Gizmos.color = Color.red;
+            float direction = (sprite != null && sprite.flipX) ? -1f : 1f;
+            Vector3 checkPosition = new Vector3(transform.position.x + (Mathf.Abs(attackPoint.localPosition.x) * direction), attackPoint.position.y, 0);
+            Gizmos.DrawWireSphere(checkPosition, attackRange);
         }
     }
 }
 
-public enum States // перечисление всех видов анимации
+public enum States
 {
     Idle,
     Run,
     Jump,
-    Death
+    Death,
+    WallSlide
 }
-
-
