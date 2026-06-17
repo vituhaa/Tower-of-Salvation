@@ -128,13 +128,16 @@ public class Prince : MonoBehaviour
             attackPoint.position.y
         );
 
-        // Ищем врагов в правильно смещенной точке
-        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(realAttackPosition, attackRange, enemyLayer);
 
+        // НАНОСИМ УРОН: Ищем врагов в круге
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(realAttackPosition, attackRange, enemyLayer);
         foreach (Collider2D enemyCollider in hitEnemies)
         {
+            // ЕСЛИ это коллайдер-триггер (зона погони) — пропускаем его и не наносим урон!
+            if (enemyCollider.isTrigger) continue;
+
             Debug.Log("НАШЛИ ВРАГА!");
-            Enemy enemy = enemyCollider.GetComponent<Enemy>();
+            Enemy enemy = enemyCollider.GetComponentInParent<Enemy>() ?? enemyCollider.GetComponentInChildren<Enemy>();
             if (enemy != null)
             {
                 enemy.TakeDamage(1);
