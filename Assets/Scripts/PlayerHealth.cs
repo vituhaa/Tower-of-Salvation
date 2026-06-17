@@ -1,31 +1,38 @@
 using UnityEngine;
-using UnityEngine.UI; // Обязательно для работы с Image
+using UnityEngine.UI;
+using System.Collections; // Обязательно для IEnumerator
 
 public class PlayerHealth : MonoBehaviour
 {
     public int maxHealth = 3;
     private int currentHealth;
 
-    [Header("Настройки сердечек")]
-    [SerializeField] private Image[] hearts; // Массив объектов картинок сердечек
-    [SerializeField] private Sprite fullHeart; // Текстура полного сердечка
-    [SerializeField] private Sprite emptyHeart; // Текстура потраченного сердечка
+    [Header("Настройки интерфейса")]
+    [SerializeField] private Image[] hearts;
+    [SerializeField] private Sprite fullHeart;
+    [SerializeField] private Sprite emptyHeart;
+
+    private SpriteRenderer spriteRenderer;
 
     private void Start()
     {
         currentHealth = maxHealth;
+        // Автоматически находим компонент спрайта у Принца или его детей
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         UpdateHeartsUI();
     }
 
     public void TakeDamage(int damage)
     {
-        Debug.Log("получаем урон!");
         currentHealth -= damage;
-
-        // Ограничиваем здоровье, чтобы оно не ушло в минус
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
-
         UpdateHeartsUI();
+
+        // Запускаем мигание при получении урона
+        if (currentHealth > 0)
+        {
+            StartCoroutine(DamageFlashRoutine());
+        }
 
         if (currentHealth <= 0)
         {
@@ -33,20 +40,25 @@ public class PlayerHealth : MonoBehaviour
         }
     }
 
+    private IEnumerator DamageFlashRoutine()
+    {
+        // 1. Окрашиваем в красный цвет
+        spriteRenderer.color = Color.red;
+        // Ждем 0.15 секунды
+        yield return new WaitForSeconds(0.15f);
+
+        // 2. Возвращаем обычный белый цвет (оригинальный вид спрайта)
+        spriteRenderer.color = Color.white;
+    }
+
     private void UpdateHeartsUI()
     {
-        // Проходимся циклом по всем сердечкам на экране
         for (int i = 0; i < hearts.Length; i++)
         {
-            // Если индекс сердечка меньше текущего здоровья — оно полное
             if (i < currentHealth)
-            {
                 hearts[i].sprite = fullHeart;
-            }
-            else // Иначе — оно потраченное (пустое)
-            {
+            else
                 hearts[i].sprite = emptyHeart;
-            }
         }
     }
 }
