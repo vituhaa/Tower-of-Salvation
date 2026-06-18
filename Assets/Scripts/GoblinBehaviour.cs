@@ -4,21 +4,30 @@ using UnityEngine;
 
 public class GoblinBehaviour : MonoBehaviour
 {
+    [Header("Настройки движения")]
     public float moveSpeed = 2f;
     public float rayDistance = 1f;
     public LayerMask groundLayer;
 
+    [Header("Патрулирование")]
     public Transform pointA; // левая
     public Transform pointB; // правая
 
+    [Header("Настройки Атаки")]
+    public int collisionDamage = 1; // Урон гоблина при контакте
 
     private Rigidbody2D rb;
     public SpriteRenderer spriteRenderer;
     private Transform currentTarget;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        //spriteRenderer = GetComponent<SpriteRenderer>();
+
+        // Автопоиск спрайта, если забыли привязать в инспекторе
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+
         currentTarget = pointB;
     }
 
@@ -50,6 +59,25 @@ public class GoblinBehaviour : MonoBehaviour
                 currentTarget = pointB;
             else
                 currentTarget = pointA;
+        }
+    }
+
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            if (collision.collider.isTrigger) return;
+
+            PlayerHealth playerHealth = collision.gameObject.GetComponent<PlayerHealth>();
+
+            if (playerHealth != null)
+            {
+                playerHealth.TakeDamage(collisionDamage);
+            }
+            else
+            {
+                Debug.LogWarning("[АТАКА ГОБЛИНА] Коснулся Игрока, но скрипт PlayerHealth на нем не найден!");
+            }
         }
     }
 }

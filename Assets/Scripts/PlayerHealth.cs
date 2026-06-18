@@ -36,6 +36,13 @@ public class PlayerHealth : MonoBehaviour
 
         if (currentHealth > 0)
         {
+            // Получаем скрипт Принца и принудительно включаем анимацию Hurt
+            Prince prince = GetComponent<Prince>();
+            if (prince != null)
+            {
+                prince.PlayHurtAnimation();
+            }
+
             // Запускаем корутину неуязвимости и мигания
             StartCoroutine(InvincibilityRoutine());
         }
@@ -46,27 +53,27 @@ public class PlayerHealth : MonoBehaviour
         }
     }
 
-    // Корутина, которая защищает игрока и заставляет его мигать
     private IEnumerator InvincibilityRoutine()
     {
-        isInvincible = true; // Включаем защиту
+        isInvincible = true;
 
-        // Сделаем красивое геймерское мигание (вкл/выкл красный цвет), пока идет кулдаун
         float timer = 0f;
-        float flashInterval = 0.15f; // Скорость мигания
+        // Чуть-чуть уменьшим интервал, чтобы мигание сочеталось с анимацией
+        float flashInterval = 0.1f;
 
-        while (timer < damageCooldown)
+        // Даем анимации Hurt проиграться короткое время (например, 0.2 секунды),
+        // прежде чем Принц снова сможет бегать и прыгать
+        yield return new WaitForSeconds(0.2f);
+
+        while (timer < damageCooldown - 0.2f)
         {
-            // Переключаем цвет: если белый — делаем красным, если красный — возвращаем белый
             spriteRenderer.color = (spriteRenderer.color == Color.white) ? Color.red : Color.white;
-
             yield return new WaitForSeconds(flashInterval);
             timer += flashInterval;
         }
 
-        // Гарантированно возвращаем Принцу нормальный цвет после кулдауна
         spriteRenderer.color = Color.white;
-        isInvincible = false; // Выключаем защиту, теперь его снова можно ранить
+        isInvincible = false;
     }
 
     private void UpdateHeartsUI()

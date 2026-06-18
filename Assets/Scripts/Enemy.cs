@@ -4,7 +4,7 @@ using System.Collections;
 public class Enemy : MonoBehaviour
 {
     public int health = 2;  // Общее здоровье для любого врага
-    [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] public SpriteRenderer spriteRenderer;
     private bool isFlashing = false;
 
     private void Start()
@@ -14,7 +14,7 @@ public class Enemy : MonoBehaviour
             spriteRenderer = GetComponentInChildren<SpriteRenderer>();
     }
 
-    public void TakeDamage(int damageAmount)
+    public virtual void TakeDamage(int damageAmount)
     {
         health -= damageAmount;
 
