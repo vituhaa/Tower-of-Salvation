@@ -181,7 +181,15 @@ public class Prince : MonoBehaviour
         }
         else
         {
-            rigid_body.velocity = new Vector2(horizontalInput * speed, rigid_body.velocity.y);
+
+            if (isAttacking && grounded)
+            {
+                rigid_body.velocity = new Vector2(0, rigid_body.velocity.y);
+            }
+            else
+            {
+                rigid_body.velocity = new Vector2(horizontalInput * speed, rigid_body.velocity.y);
+            }
 
             if (!isAttacking)
             {
