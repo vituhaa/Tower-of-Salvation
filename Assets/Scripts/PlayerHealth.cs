@@ -5,7 +5,7 @@ using System.Collections;
 public class PlayerHealth : MonoBehaviour
 {
     public int maxHealth = 3;
-    private int currentHealth;
+    private float currentHealth;
 
     [Header("Настройки интерфейса")]
     [SerializeField] private Image[] hearts;
@@ -14,7 +14,7 @@ public class PlayerHealth : MonoBehaviour
 
     [Header("Настройки неуязвимости")]
     [SerializeField] private float damageCooldown = 1.0f; // Время неуязвимости в секундах
-    private bool isInvincible = false; // Флаг: неуязвим ли игрок сейчас?
+    private bool isInvincible = false; // Флаг неуязвим ли игрок сейчас
 
     private SpriteRenderer spriteRenderer;
 
@@ -25,9 +25,8 @@ public class PlayerHealth : MonoBehaviour
         UpdateHeartsUI();
     }
 
-    public void TakeDamage(int damage)
+    public void TakeDamage(float damage)
     {
-        // ЕСЛИ ИГРОК НЕУЯЗВИМ — ИГНОРИРУЕМ УРОН
         if (isInvincible) return;
 
         currentHealth -= damage;
@@ -36,14 +35,12 @@ public class PlayerHealth : MonoBehaviour
 
         if (currentHealth > 0)
         {
-            // Получаем скрипт Принца и принудительно включаем анимацию Hurt
             Prince prince = GetComponent<Prince>();
             if (prince != null)
             {
                 prince.PlayHurtAnimation();
             }
 
-            // Запускаем корутину неуязвимости и мигания
             StartCoroutine(InvincibilityRoutine());
         }
 
@@ -58,11 +55,8 @@ public class PlayerHealth : MonoBehaviour
         isInvincible = true;
 
         float timer = 0f;
-        // Чуть-чуть уменьшим интервал, чтобы мигание сочеталось с анимацией
         float flashInterval = 0.1f;
 
-        // Даем анимации Hurt проиграться короткое время (например, 0.2 секунды),
-        // прежде чем Принц снова сможет бегать и прыгать
         yield return new WaitForSeconds(0.2f);
 
         while (timer < damageCooldown - 0.2f)
@@ -80,7 +74,7 @@ public class PlayerHealth : MonoBehaviour
     {
         for (int i = 0; i < hearts.Length; i++)
         {
-            if (hearts[i] == null) continue; // Защита от пустых слотов
+            if (hearts[i] == null) continue; 
 
             if (i < currentHealth)
                 hearts[i].sprite = fullHeart;

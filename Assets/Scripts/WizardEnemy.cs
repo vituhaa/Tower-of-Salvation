@@ -18,7 +18,6 @@ public class WizardEnemy : Enemy
     private float tpTimer;
     private float fireTimer;
 
-    // НАШ НОВЫЙ ФЛАГ-ЗАЩИТА
     private bool isTeleporting = false;
 
     private void Start()
@@ -34,23 +33,19 @@ public class WizardEnemy : Enemy
     {
         if (player == null) return;
 
-        // ЕСЛИ МАГ В ПРОЦЕССЕ ТЕЛИКА — ПРЕРЫВАЕМ UPDATE И ЖДЕМ!
         if (isTeleporting) return;
 
-        // --- ЛОГИКА ПОВОРОТА К ИГРОКУ ---
         if (spriteRenderer != null)
         {
             spriteRenderer.flipX = transform.position.x > player.position.x;
         }
 
-        // --- ТАЙМЕР ТЕЛЕПОРТА ---
         tpTimer -= Time.deltaTime;
         if (tpTimer <= 0)
         {
             Teleport();
         }
 
-        // --- ТАЙМЕР СТРЕЛЬБЫ ---
         fireTimer -= Time.deltaTime;
         if (fireTimer <= 0)
         {
@@ -60,7 +55,6 @@ public class WizardEnemy : Enemy
 
     public override void TakeDamage(int damageAmount)
     {
-        // Если маг уже телепортируется, он не должен получать урон и запускать ТП заново
         if (isTeleporting) return;
 
         base.TakeDamage(damageAmount);
@@ -77,7 +71,7 @@ public class WizardEnemy : Enemy
     private void Teleport()
     {
         if (teleportPoints == null || teleportPoints.Length <= 1) return;
-        if (isTeleporting) return; // Защита от двойного вызова
+        if (isTeleporting) return; 
 
         StartCoroutine(TeleportRoutine());
     }
@@ -86,12 +80,11 @@ public class WizardEnemy : Enemy
     {
         if (spriteRenderer == null) yield break;
 
-        isTeleporting = true; // Блокируем Update и урон
+        isTeleporting = true; 
 
         float duration = 0.4f;
         float timer = 0f;
 
-        // --- 1. ПЛАВНОЕ ИСЧЕЗНОВЕНИЕ ---
         while (timer < duration)
         {
             timer += Time.deltaTime;
@@ -101,7 +94,6 @@ public class WizardEnemy : Enemy
             yield return null;
         }
 
-        // --- 2. ПЕРЕМЕЩЕНИЕ НА НОВУЮ ТОЧКУ ---
         int randomIndex = lastPointIndex;
         while (randomIndex == lastPointIndex)
         {
@@ -111,7 +103,6 @@ public class WizardEnemy : Enemy
 
         transform.position = teleportPoints[randomIndex].position;
 
-        // --- 3. ПЛАВНОЕ ПОЯВЛЕНИЕ ---
         timer = 0f;
         while (timer < duration)
         {
@@ -124,12 +115,11 @@ public class WizardEnemy : Enemy
 
         spriteRenderer.color = Color.white;
 
-        // Сбрасываем все таймеры и счетчики ТОЛЬКО после полного появления!
         hitCounter = 0;
         tpTimer = tpInterval;
-        fireTimer = fireRate; // Обнуляем и таймер стрельбы, чтобы он не стрелял сразу после ТП
+        fireTimer = fireRate;
 
-        isTeleporting = false; // Открываем Update, маг снова готов к бою!
+        isTeleporting = false;
     }
 
     private void Shoot()

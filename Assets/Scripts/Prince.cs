@@ -66,8 +66,6 @@ public class Prince : MonoBehaviour
             return;
         }
 
-        // ИСПРАВЛЕНИЕ 1: Убрали обнуление horizontalInput = 0 во время атаки.
-        // Теперь ввод считывается ВСЕГДА!
         if (!isWallJumping)
         {
             horizontalInput = Input.GetAxis("Horizontal");
@@ -89,7 +87,6 @@ public class Prince : MonoBehaviour
             }
         }
 
-        // Проверка атаки на ЛКМ (ИСПРАВЛЕНИЕ 2: убрали проверку "&& grounded", чтобы атаковать можно было и в воздухе)
         if (Time.time >= nextAttackTime && Input.GetMouseButtonDown(0))
         {
             StartCoroutine(AttackRoutine());
@@ -103,8 +100,6 @@ public class Prince : MonoBehaviour
             }
             else if (isWallSliding)
             {
-                // ЖЕСТКИЙ СБРОС: Как только нажали Пробел на стене, 
-                // мы СРАЗУ выключаем флаг скольжения, не дожидаясь FixedUpdate
                 isWallSliding = false;
 
                 WallJump();
@@ -118,17 +113,14 @@ public class Prince : MonoBehaviour
         nextAttackTime = Time.time + attackCooldown;
         animations.SetInteger("state", -1);
 
-        // ИСПРАВЛЕНИЕ 4: Удалили строчку обнуления velocity (которая тормозила Принца)
         animations.SetTrigger("AttackTrigger");
 
-        // НАНОСИМ УРОН: Вычисляем положение точки атаки с учетом разворота
         float direction = sprite.flipX ? -1f : 1f;
         Vector2 realAttackPosition = new Vector2(
             transform.position.x + (Mathf.Abs(attackPoint.localPosition.x) * direction),
             attackPoint.position.y
         );
 
-        // НАНОСИМ УРОН: Ищем врагов в круге
         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(realAttackPosition, attackRange, enemyLayer);
         foreach (Collider2D enemyCollider in hitEnemies)
         {
@@ -152,12 +144,10 @@ public class Prince : MonoBehaviour
 
         CheckSurroundings();
 
-        // ЖЕСТКИЙ СБРОС: Если мы на земле, мы физически не можем скользить по стене!
         if (grounded)
         {
             isWallSliding = false;
         }
-        // Скользим только если: НЕ на земле И касаемся стены И жмем кнопку в сторону стены
         else if (!grounded && isTouchingWall && horizontalInput != 0)
         {
             isWallSliding = true;
@@ -227,10 +217,8 @@ public class Prince : MonoBehaviour
 
     private void CheckSurroundings()
     {
-        // 1. Сначала четко проверяем землю
         grounded = Physics2D.OverlapCircle(groundCheckPoint.position, groundCheckRadius, groundLayer);
 
-        // 2. Проверяем стену ТОЛЬКО если мы находимся в воздухе!
         if (wallCheckPoint != null && !grounded)
         {
             float direction = sprite.flipX ? -1f : 1f;
@@ -239,7 +227,6 @@ public class Prince : MonoBehaviour
         }
         else
         {
-            // Если Принц на земле, он НЕ МОЖЕТ касаться стены для скольжения
             isTouchingWall = false;
         }
 
@@ -291,11 +278,9 @@ public class Prince : MonoBehaviour
 
     public void PlayHurtAnimation()
     {
-        // Прерываем корутину атаки, если она шла, чтобы вернуть управление
         StopAllCoroutines();
         isAttacking = false;
 
-        // Насильно отправляем в аниматор состояние урона
         animations.SetInteger("state", (int)States.Hurt);
     }
 

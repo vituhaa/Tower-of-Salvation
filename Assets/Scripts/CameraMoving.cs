@@ -36,12 +36,10 @@ public class CameraMoving : MonoBehaviour
 
         float distanceX = target.position.x - targetPositionX;
 
-        // Если игрок ушел слишком далеко вправо, двигаем нашу цель вправо
         if (distanceX > deadZoneX)
         {
             targetPositionX = target.position.x - deadZoneX;
         }
-        // Если игрок ушел слишком далеко влево, двигаем нашу цель влево
         else if (distanceX < -deadZoneX)
         {
             targetPositionX = target.position.x + deadZoneX;

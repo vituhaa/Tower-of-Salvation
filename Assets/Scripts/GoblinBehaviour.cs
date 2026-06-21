@@ -14,7 +14,7 @@ public class GoblinBehaviour : MonoBehaviour
     public Transform pointB; // правая
 
     [Header("Настройки Атаки")]
-    public int collisionDamage = 1; // Урон гоблина при контакте
+    public float collisionDamage = 0.5f; // Урон гоблина при контакте
 
     private Rigidbody2D rb;
     public SpriteRenderer spriteRenderer;
@@ -24,7 +24,6 @@ public class GoblinBehaviour : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
 
-        // Автопоиск спрайта, если забыли привязать в инспекторе
         if (spriteRenderer == null)
             spriteRenderer = GetComponentInChildren<SpriteRenderer>();
 

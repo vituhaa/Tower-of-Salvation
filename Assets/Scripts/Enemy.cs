@@ -9,7 +9,6 @@ public class Enemy : MonoBehaviour
 
     private void Start()
     {
-        // Если забыли привязать в инспекторе, ищем в самом объекте
         if (spriteRenderer == null)
             spriteRenderer = GetComponentInChildren<SpriteRenderer>();
     }
@@ -42,7 +41,6 @@ public class Enemy : MonoBehaviour
 
     private void Die()
     {
-        // Здесь в будущем можно включить анимацию смерти или запустить частицы
         Destroy(gameObject);
     }
 }

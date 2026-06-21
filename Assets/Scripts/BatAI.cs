@@ -4,7 +4,7 @@ public class BatAI : MonoBehaviour
 {
     [Header("Настройки полета")]
     [SerializeField] private float speed = 2.5f;
-    public int collisionDamage = 1;
+    public float collisionDamage = 0.5f;
 
     [Header("Ссылки")]
     [SerializeField] private SpriteRenderer spriteRenderer;
@@ -25,7 +25,6 @@ public class BatAI : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // ЛЕТИМ: Только если активирован режим погони
         if (isChasing && playerTransform != null)
         {
             Vector2 direction = (playerTransform.position - transform.position).normalized;
@@ -42,7 +41,6 @@ public class BatAI : MonoBehaviour
         }
     }
 
-    // --- ЗОНА ОБНАРУЖЕНИЯ (БОЛЬШОЙ КРУГ-ТРИГГЕР) ---
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Player"))
@@ -50,15 +48,10 @@ public class BatAI : MonoBehaviour
             playerTransform = collision.transform;
             isChasing = true;
 
-            // Включаем анимацию полета в Аниматоре
             if (anim != null) anim.SetBool("isFlying", true);
         }
     }
 
-    // МЕТОД OnTriggerExit2D МЫ УДАЛИЛИ! Теперь мышь никогда не потеряет след.
-
-    // --- ФИЗИЧЕСКИЙ УКУС (МАЛЕНЬКИЙ КОЛЛАЙДЕР) ---
-    // --- КАСАНИЕ ИГРОКА (Постоянный контакт) ---
     private void OnCollisionStay2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Player"))
@@ -68,8 +61,6 @@ public class BatAI : MonoBehaviour
             PlayerHealth playerHealth = collision.gameObject.GetComponent<PlayerHealth>();
             if (playerHealth != null)
             {
-                // Благодаря кулдауну в PlayerHealth, урон снимется 
-                // только после окончания времени неуязвимости!
                 playerHealth.TakeDamage(collisionDamage);
             }
         }
