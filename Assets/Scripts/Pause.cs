@@ -50,14 +50,23 @@ public class Pause : MonoBehaviour
         }
     }
 
+    private void SaveCurrentLevel()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+        PlayerPrefs.SetString("LastLevel", currentScene);
+        PlayerPrefs.Save();
+    }
+
     public void ReturnToMainMenu()
     {
+        SaveCurrentLevel();
         ResumeGame();
         SceneManager.LoadScene(mainMenuSceneName);
     }
 
     public void ExitButton()
     {
+        SaveCurrentLevel();
         ResumeGame();
         Application.Quit();
     }
