@@ -7,14 +7,11 @@ public class PlayerHealth : MonoBehaviour
     public int maxHealth = 3;
     private float currentHealth;
 
-    [Header("Ќастройки интерфейса")]
     [SerializeField] private Image[] hearts;
     [SerializeField] private Sprite fullHeart;
     [SerializeField] private Sprite emptyHeart;
-
-    [Header("Ќастройки неу€звимости")]
-    [SerializeField] private float damageCooldown = 1.0f; // ¬рем€ неу€звимости в секундах
-    private bool isInvincible = false; // ‘лаг неу€звим ли игрок сейчас
+    [SerializeField] private float damageCooldown = 1.0f; // врем€ неу€звимости в секундах
+    private bool isInvincible = false; // флаг неу€звим ли игрок сейчас
 
     private SpriteRenderer spriteRenderer;
 

@@ -2,11 +2,8 @@ using UnityEngine;
 
 public class BatAI : MonoBehaviour
 {
-    [Header("Настройки полета")]
     [SerializeField] private float speed = 2.5f;
     public float collisionDamage = 0.5f;
-
-    [Header("Ссылки")]
     [SerializeField] private SpriteRenderer spriteRenderer;
 
     private Transform playerTransform;

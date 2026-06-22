@@ -5,11 +5,11 @@ using UnityEngine.SceneManagement;
 
 public class StartGame : MonoBehaviour
 {
-    [SerializeField] private string firstLevelName = "Level_1";
+    [SerializeField] private string firstLevelName = "Story_start";
 
     public void Start_Game()
-    {
-        PlayerPrefs.DeleteKey("LastLevel");
+    {   
+        PlayerPrefs.DeleteKey("LastLevel"); 
         SceneManager.LoadScene(firstLevelName);
     }
 
